@@ -49,12 +49,13 @@ typedef MultiWiiProtocolPacket = {
 	var code : MultiWiiProtocolCommand;
 	var data : Bytes;
 	var checksum : Int;
-	var size : Int;
+	var size : UInt;
 }
 
 class MultiWiiProtocol {
 
-	//public static inline var HEADER = "$M<";
+	public static inline var HEADER_A = "$M<"; // FC->PC
+	public static inline var HEADER_B = "$M>"; // PC->FC
 	public static inline var PIDITEMS = 10;
 
 	public static function createCommand( msp : MultiWiiProtocolCommand, ?data : String ) : Bytes {
