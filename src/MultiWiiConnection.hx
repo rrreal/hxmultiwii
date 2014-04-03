@@ -29,7 +29,8 @@ class MultiWiiConnection {
 	}
 
 	public function disconnect() {
-		//TODO
+		serial.close();
+		connected = false;
 	}
 
 	public function send( msp : MultiWiiProtocolCommand, ?data : String ) {
