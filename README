@@ -2,4 +2,8 @@
 HXMULTIWII
 ==========
 Haxe/Sys serial communication library for multiwii copters.
+
+http://www.multiwii.com/
+https://code.google.com/p/multiwii/
 http://www.multiwii.com/wiki/index.php?title=Multiwii_Serial_Protocol
+http://microquad.blogspot.co.at/2013/04/a-serial-multiwii-controller.html
