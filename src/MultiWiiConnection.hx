@@ -4,12 +4,13 @@ import haxe.io.BytesBuffer;
 import haxe.io.BytesInput;
 import MultiWiiProtocol;
 
-enum MultiWiiConnectionState {
+private enum MultiWiiConnectionState {
 	header(i:Int);
 	size;
 	code;
 	data;
 	checksum;
+	//error(i:Int);
 }
 
 @:require(sys)
@@ -34,13 +35,13 @@ class MultiWiiConnection {
 	}
 
 	public function send( msp : MultiWiiProtocolCommand, ?data : String, flush = true ) {
-		trace( 'sending msp [$msp]' );
+		//trace( 'send msp [$msp]' );
 		serial.writeBytes( MultiWiiProtocol.create( msp, data ).toString() );
 		if( flush ) serial.flush();
 	}
 
 	public function recv() : MultiWiiProtocolPacket {
-		trace( "recv msp" );
+		//trace( "recv msp" );
 		var r : MultiWiiProtocolPacket = { size : null, code : null, data : null, checksum : 0 }; 
 		var data_pos = 0;
 		var state = header(0);
@@ -52,10 +53,30 @@ class MultiWiiConnection {
 				while( remain > 0 ) {
 				//	trace("state:"+state+" / remain:"+remain);
 					switch state {
+					/*
+					case error(i):
+						var c = serial.readByte();
+						if( i == 2 ) {
+							state = header(0);
+						}
+					*/
 					case header(i):
-						if( serial.readByte() != MultiWiiProtocol.HEADER_B.charCodeAt(i) )
-							throw 'invalid msp header';
+						var c = serial.readByte();
 						remain--;
+						if( c != MultiWiiProtocol.HEADER_B.charCodeAt(i) ) {
+							//TODO
+							if( i == 2 && String.fromCharCode(c) == "!" ) {
+								trace("TODO ERROR");
+								//trace(serial.readByte()); // 0
+								//trace(serial.readByte()); //  [unknown code]
+								//trace(serial.readByte()); // [checksum]
+								//state = header(0);
+								//state = error(0);
+								return null;
+							}
+
+							throw 'invalid msp header ($i)';
+						}
 						state = (i < 2) ? header(i+1) : size;
 					case size:
 						r.size = serial.readByte();
@@ -83,11 +104,10 @@ class MultiWiiConnection {
 						}
 					case checksum:
 						var cs = serial.readByte();
-						//TODO
-						trace("CHECKSUM TEST: "+r.checksum+"="+cs );
+						remain--;
 						if( r.checksum != cs ) {
 							//TODO
-							trace("FAILED!");
+							trace("CHECKSUM FAILED! "+r.checksum+"="+cs );
 					//		throw 'invalid checksum';
 						}
 						r.checksum = cs;

@@ -1,0 +1,5 @@
+-neko test.n
+-main App
+-lib hxserial
+-cp src
+-cp test

@@ -5,51 +5,53 @@ import haxe.io.BytesInput;
 
 @:enum abstract MultiWiiProtocolCommand(Int) {
 
-	var MSP_VERSION = 0;
+	var VERSION = 0;
 
-	var MSP_IDENT = 100;
-	var MSP_STATUS = 101;
-	var MSP_RAW_IMU = 102;
-	var MSP_SERVO = 103;
-	var MSP_MOTOR = 104;
-	var MSP_RC = 105;
-	var MSP_RAW_GPS = 106;
-	var MSP_COMP_GPS = 107;
-	var MSP_ATTITUDE = 108;
-	var MSP_ALTITUDE = 109;
-	var MSP_ANALOG = 110;
-	var MSP_RC_TUNING = 111;
-	var MSP_PID = 112;
-	var MSP_BOX = 113;
-	var MSP_MISC = 114;
-	var MSP_MOTOR_PINS = 115;
-	var MSP_BOXNAMES = 116;
-	var MSP_PIDNAMES = 117;
-	var MSP_WP = 118;
-	var MSP_BOXIDS = 119;
-	var MSP_SERVO_CONF = 120;
+	var IDENT = 100;
+	var STATUS = 101;
+	var RAW_IMU = 102;
+	var SERVO = 103;
+	var MOTOR = 104;
+	var RC = 105;
+	var RAW_GPS = 106;
+	var COMP_GPS = 107;
+	var ATTITUDE = 108;
+	var ALTITUDE = 109;
+	var ANALOG = 110;
+	var RC_TUNING = 111;
+	var PID = 112;
+	var BOX = 113;
+	var MISC = 114;
+	var MOTOR_PINS = 115;
+	var BOXNAMES = 116;
+	var PIDNAMES = 117;
+	var WP = 118;
+	var BOXIDS = 119;
+	var SERVO_CONF = 120;
 
-	var MSP_SET_RAW_RC = 200;
-	var MSP_SET_RAW_GPS = 201;
-	var MSP_SET_PID = 202;
-	var MSP_SET_BOX = 203;
-	var MSP_SET_RC_TUNING = 204;
-	var MSP_ACC_CALIBRATION = 205;
-	var MSP_MAG_CALIBRATION = 206;
-	var MSP_SET_MISC = 207;
-	var MSP_RESET_CONF = 208;
-	var MSP_SET_WP = 209;
-	var MSP_SELECT_SETTING = 210;
-	var MSP_SET_HEAD = 211;
-	var MSP_SET_SERVO_CONF = 212;
-	var MSP_SET_MOTOR = 214;
+	var SET_RAW_RC = 200;
+	var SET_RAW_GPS = 201;
+	var SET_PID = 202;
+	var SET_BOX = 203;
+	var SET_RC_TUNING = 204;
+	var ACC_CALIBRATION = 205;
+	var MAG_CALIBRATION = 206;
+	var SET_MISC = 207;
+	var RESET_CONF = 208;
+	var SET_WP = 209;
+	var SELECT_SETTING = 210;
+	var SET_HEAD = 211;
+	var SET_SERVO_CONF = 212;
+	var SET_MOTOR = 214;
 
-	var MSP_BIND = 240;
+	var BIND = 240;
 
-	var MSP_EEPROM_WRITE = 250;
+	var EEPROM_WRITE = 250;
 
-	var MSP_DEBUGMSG = 253;
-	var MSP_DEBUG = 254;
+	var DEBUGMSG = 253;
+	var DEBUG = 254;
+
+	var UUU = 178;
 }
 
 /*
@@ -117,92 +119,80 @@ class MultiWiiProtocol {
 	/**
 		Read MSP command data
 	*/
-	public static function read( msp : MultiWiiProtocolCommand, data : Bytes ) : Array<Int> {
+	public static function read( msp : MultiWiiProtocolCommand, data : Bytes ) : Dynamic {
 		var r = new Array<Int>();
 		var i = new BytesInput( data );
 		switch msp {
-		case MSP_IDENT:
-			trace("MSP_IDENT");
+		case IDENT:
 			for( j in 0...3 ) r.push( i.readByte() );
 			r.push( i.readInt16() );
-		case MSP_STATUS:
-			trace("MSP_STATUS");
+		case STATUS:
 			for( j in 0...3 ) r.push( i.readInt16() );
 			r.push( i.readInt32() );
 			r.push( i.readByte() );
-		case MSP_RAW_IMU:
-			trace( "MSP_RAW_IMU" );
+		case RAW_IMU:
 			for( j in 0...9 ) r.push( i.readInt16() );
-		case MSP_SERVO:
-			trace("MSP_SERVO");
+		case SERVO:
 			for( n in 0...8 ) r.push( i.readUInt16() ); //TODO Docs say: 16 x UINT 16
-		case MSP_MOTOR:
-			trace("MSP_MOTOR");
+		case MOTOR:
 			for( n in 0...8 ) r.push( i.readUInt16() ); //TODO Docs say: 16 x UINT 16
-		case MSP_RC:
-			trace("MSP_RC");
+		case RC:
 			for( n in 0...8 ) r.push( i.readUInt16() ); //TODO Docs say: 16 x UINT 16
-		case MSP_RAW_GPS:
-			trace("MSP_RAW_GPS");
+		case RAW_GPS:
 			for( n in 0...2 ) r.push( i.readByte() );
 			for( n in 0...2 ) r.push( i.readInt32() );
 			for( n in 0...3 ) r.push( i.readInt16() );
-		case MSP_COMP_GPS:
-			trace("MSP_COMP_GPS");
+		case COMP_GPS:
 			for( n in 0...2 ) r.push( i.readUInt16() );
 			r.push( i.readByte() );
-		case MSP_ATTITUDE:
-			trace("MSP_ATTITUDE");
+		case ATTITUDE:
 			var i = new BytesInput( data );
 			for( n in 0...3 ) r.push( i.readInt16() );
-		case MSP_ALTITUDE:
-			trace("MSP_ALTITUDE");
+		case ALTITUDE:
 			var i = new BytesInput( data );
 			r.push( i.readInt32() );
 			r.push( i.readInt16() );
-		case MSP_ANALOG:
-			trace("MSP_ANALOG");
+		case ANALOG:
 			r.push( i.readByte() );
 			for( j in 0...3 ) r.push( i.readUInt16() );
-		case MSP_RC_TUNING:
-			trace("MSP_RC_TUNING");
+		case RC_TUNING:
 			for( j in 0...7 ) r.push( i.readByte() );
-		case MSP_PID:
-			trace("MSP_PID");
+		case PID:
 			for( j in 0...(PIDITEMS*3) ) r.push( i.readByte() );
-		case MSP_BOX:
-			trace("MSP_BOX");
+		case BOX:
 			//TODO BOXITEMS number is dependant of multiwii configuration, BOXITEMS x UINT 16
 			for( j in 0...Std.int(data.length/2) ) r.push( i.readUInt16() );
 			//for( j in 0...data.length ) r.push( i.readUInt16() );
-		case MSP_MISC:
-			trace("MSP_MISC");
+		case MISC:
 			for( j in 0...6 ) r.push( i.readUInt16() );
 			r.push( i.readInt32() );
 			r.push( i.readUInt16() );
 			for( j in 0...4 ) r.push( i.readByte() );
-		case MSP_MOTOR_PINS:
-			trace("MSP_MOTOR_PINS");
+		case MOTOR_PINS:
 			for( j in 0...8 ) r.push( i.readByte() );
-		case MSP_BOXNAMES:
-			trace("MSP_BOXNAMES");
+		case BOXNAMES:
 			//TODO
-			trace(data);
+			return data.toString();
 			//var s = data.toString();
 			//for( j in 0...s.length ) r.push( s.charCodeAt(j) );
-		case MSP_PIDNAMES:
+
+		case PIDNAMES:
 			//TODO
-			trace("MSP_PIDNAMES");
-			trace(data);
-		case MSP_SERVO_CONF:
-			trace("MSP_SERVO_CONF");
+	//		trace("PIDNAMES");
+			//trace(data);
+			var s = data.toString();
+			for( j in 0...s.length ) r.push( s.charCodeAt(j) );
+
+
+		case SERVO_CONF:
+	//		trace("SERVO_CONF");
 			for( j in 0...8 ) {
 				for( k in 0...3 ) r.push( i.readUInt16() );
 				r.push( i.readByte() );
 			}
 		/*
-		case MSP_WP:
-			trace("MSP_WP");
+		case WP:
+			trace("WP");
 			trace( i.readByte() );
 			trace( i.readInt32() );
 			trace( i.readInt32() );
@@ -219,11 +209,11 @@ class MultiWiiProtocol {
 	
 	/*
 	public static function read_ident( data : Bytes ) {
-		var a = read( MSP_IDENT, data );
+		var a = read( IDENT, data );
 		return {
 			version : a[0],
 			multitype : a[1],
-			msp_version : a[2],
+			version : a[2],
 			capability : a[3]
 		};
 	}
