@@ -1,0 +1,14 @@
+{
+	"name": "multiwii",
+	"license": "Public",
+	"tags": ["multiwii","mwc","arduino","serial","mps","multicopter"],
+	"description": "Multiwii communication library",
+	"version": "0.1",
+	"releasenote": "See CHANGES",
+	"url": "https://github.com/tong/hxmultiwii",
+	"contributors": ["tong"],
+	"classPath" : "src/",
+	"dependencies": {
+		"hxSerial": ""
+	}
+}
