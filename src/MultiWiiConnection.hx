@@ -33,67 +33,64 @@ class MultiWiiConnection {
 		connected = false;
 	}
 
-	public function send( msp : MultiWiiProtocolCommand, ?data : String ) {
+	public function send( msp : MultiWiiProtocolCommand, ?data : String, flush = true ) {
 		trace( 'sending msp [$msp]' );
-		serial.writeBytes( MultiWiiProtocol.createCommand( msp, data ).toString() );
-		serial.flush();
+		serial.writeBytes( MultiWiiProtocol.create( msp, data ).toString() );
+		if( flush ) serial.flush();
 	}
 
 	public function recv() : MultiWiiProtocolPacket {
 		trace( "recv msp" );
+		var r : MultiWiiProtocolPacket = { size : null, code : null, data : null, checksum : 0 }; 
+		var data_pos = 0;
 		var state = header(0);
-		var pos = 0;
-		var r : MultiWiiProtocolPacket = cast {}; 
 		while( true ) {
 			var available = serial.available();
 			if( available > 0 ) {
-				//trace('available:$available');
+			//	trace('available:$available');
 				var remain = available;
-				trace("state:"+state+" / remain:"+remain);
 				while( remain > 0 ) {
+				//	trace("state:"+state+" / remain:"+remain);
 					switch state {
 					case header(i):
-						readHeaderByte(i);
+						if( serial.readByte() != MultiWiiProtocol.HEADER_B.charCodeAt(i) )
+							throw 'invalid msp header';
 						remain--;
-						state = (i == 2) ? size : header(i+1);
+						state = (i < 2) ? header(i+1) : size;
 					case size:
 						r.size = serial.readByte();
 						remain--;
-						state = MultiWiiConnectionState.code;
+						r.checksum ^= (r.size & 0xff);
+						state = code;
 					case code:
-						r.code = cast serial.readByte();
+						var msp = serial.readByte();
 						remain--;
-						state = MultiWiiConnectionState.data;
+						r.code = cast msp;
+						r.checksum ^= (msp & 0xff);
+						state = (r.size == 0) ? checksum : data;
 					case data:
-						//trace("DAAAAAAAATA size:"+r.size+" / remain:"+remain);
-						if( r.size == 0 ) {
-							state = checksum;
-							continue;
-						}
 						if( r.data == null )
 							r.data = Bytes.alloc(r.size);
-						//var n = 0;
 						while( remain > 0 ) {
-						//	trace("::::"+remain);
-							r.data.set( pos, serial.readByte() );
+							var c = serial.readByte();
 							remain--;
-							pos++;
-							if( pos == r.size ) {
+							r.checksum ^= (c & 0xff);
+							r.data.set( data_pos, c );
+							if( ++data_pos == r.size ) {
 								state = checksum;
 								break;
 							}
-							/*
-							if( r.data.length == r.size ) {
-								state = checksum;
-								break;
-							}
-							*/
 						}
 					case checksum:
+						var cs = serial.readByte();
 						//TODO
-						var checksum = serial.readByte();
-						//trace("checksum:"+checksum);
-						r.checksum = checksum;
+						trace("CHECKSUM TEST: "+r.checksum+"="+cs );
+						if( r.checksum != cs ) {
+							//TODO
+							trace("FAILED!");
+					//		throw 'invalid checksum';
+						}
+						r.checksum = cs;
 						return r;
 					}
 				}
@@ -102,9 +99,16 @@ class MultiWiiConnection {
 		return null;
 	}
 
-	function readHeaderByte( i : Int ) {
-		if( serial.readByte() != MultiWiiProtocol.HEADER_B.charCodeAt(i) )
-			throw 'invalid msp header';
+	/*
+	public function request_ident() {
+		send( MSP_IDENT );
+		return MultiWiiProtocol.read_ident( recv().data );
 	}
+
+	public function request_status() {
+		send( MSP_STATUS );
+		return MultiWiiProtocol.read_status( recv().data );
+	}
+	*/
 
 }
