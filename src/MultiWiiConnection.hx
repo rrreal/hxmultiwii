@@ -34,85 +34,72 @@ class MultiWiiConnection {
 		connected = false;
 	}
 
-	public function send( msp : MultiWiiProtocolCommand, ?data : String, flush = true ) {
-		//trace( 'send msp [$msp]' );
+	/**
+		Create and send msp packet.
+	*/
+	public function send( msp : MultiWiiProtocolCommand, ?data : String, flush = false ) {
+		if( !connected )
+			throw 'not connected';
 		serial.writeBytes( MultiWiiProtocol.create( msp, data ).toString() );
 		if( flush ) serial.flush();
 	}
 
+	/**
+		Read a msp packet from serial connection.
+	*/
 	public function recv() : MultiWiiProtocolPacket {
-		//trace( "recv msp" );
-		var r : MultiWiiProtocolPacket = { size : null, code : null, data : null, checksum : 0 }; 
-		var data_pos = 0;
 		var state = header(0);
+		var p : MultiWiiProtocolPacket = { size : null, code : null, data : null, checksum : 0 }; 
+		var packetPos = 0;
 		while( true ) {
 			var available = serial.available();
 			if( available > 0 ) {
-			//	trace('available:$available');
-				var remain = available;
-				while( remain > 0 ) {
-				//	trace("state:"+state+" / remain:"+remain);
+				var pos = 0;
+				//trace( 'available:$available' );
+				while( pos < available ) {
+					//trace("state:"+state+'( pos:$pos, available:$available )' );
 					switch state {
-					/*
-					case error(i):
-						var c = serial.readByte();
-						if( i == 2 ) {
-							state = header(0);
-						}
-					*/
 					case header(i):
 						var c = serial.readByte();
-						remain--;
 						if( c != MultiWiiProtocol.HEADER_B.charCodeAt(i) ) {
-							//TODO
 							if( i == 2 && String.fromCharCode(c) == "!" ) {
-								trace("TODO ERROR");
-								//trace(serial.readByte()); // 0
-								//trace(serial.readByte()); //  [unknown code]
-								//trace(serial.readByte()); // [checksum]
-								//state = header(0);
-								//state = error(0);
-								return null;
+								//TODO protocol error
+								trace("TODO protocol error");
 							}
-
 							throw 'invalid msp header ($i)';
 						}
 						state = (i < 2) ? header(i+1) : size;
 					case size:
-						r.size = serial.readByte();
-						remain--;
-						r.checksum ^= (r.size & 0xff);
+						p.size = serial.readByte();
 						state = code;
+						p.checksum ^= (p.size & 0xff);
 					case code:
 						var msp = serial.readByte();
-						remain--;
-						r.code = cast msp;
-						r.checksum ^= (msp & 0xff);
-						state = (r.size == 0) ? checksum : data;
+						p.code = cast msp;
+						p.checksum ^= (msp & 0xff);
+						state = (p.size == 0) ? checksum : data;
+						if( p.size == 0 )
+							state = checksum;
+						else {
+							p.data = Bytes.alloc( p.size );
+							state = data;
+						}
 					case data:
-						if( r.data == null )
-							r.data = Bytes.alloc(r.size);
-						while( remain > 0 ) {
-							var c = serial.readByte();
-							remain--;
-							r.checksum ^= (c & 0xff);
-							r.data.set( data_pos, c );
-							if( ++data_pos == r.size ) {
-								state = checksum;
-								break;
-							}
-						}
+						var c = serial.readByte();
+						p.data.set( packetPos-5, c );
+						p.checksum ^= (c & 0xff);
+						if( packetPos-4 == p.size ) state = checksum;
 					case checksum:
-						var cs = serial.readByte();
-						remain--;
-						if( r.checksum != cs ) {
+						var sum = serial.readByte();
+						//trace( "checksum: "+sum+":"+p.checksum );
+						if( sum != p.checksum ) {
 							//TODO
-							trace("CHECKSUM FAILED! "+r.checksum+"="+cs );
-					//		throw 'invalid checksum';
+							trace("\tWARNING! INVALID CHECKSUM" );
 						}
-						r.checksum = cs;
-						return r;
+						return p;
 					}
+					pos++;
+					packetPos++;
 				}
 			}
 		}
