@@ -1,18 +1,10 @@
 
+import Sys.print;
 import Sys.println;
 import MultiWiiProtocol;
+import MultiWiiProtocol.MultiWiiProtocolCommand;
 
 class App extends haxe.unit.TestCase {
-
-	static var cnx : MultiWiiConnection;
-
-	static function sendRecvPacket<T>( msp : MultiWiiProtocolCommand ) {
-		cnx.send( msp );
-		var packet = cnx.recv();
-		if( packet == null )
-			return null;
-		return MultiWiiProtocol.read( packet.code, packet.data );
-	}
 
 	static function main() {
 
@@ -21,7 +13,7 @@ class App extends haxe.unit.TestCase {
 		if( args.length > 0 )
 			path = args[0];
 
-		cnx = new MultiWiiConnection( path );
+		var cnx = new MultiWiiConnection( path );
 		cnx.connect();
 		if( !cnx.connected ) {
 			trace('failed to connect multiwii');
@@ -32,6 +24,7 @@ class App extends haxe.unit.TestCase {
 		
 		var commands = [
 			MultiWiiProtocolCommand.IDENT,
+			MultiWiiProtocolCommand.ATTITUDE,
 			MultiWiiProtocolCommand.STATUS,
 			MultiWiiProtocolCommand.RAW_IMU,
 			MultiWiiProtocolCommand.SERVO,
@@ -52,15 +45,17 @@ class App extends haxe.unit.TestCase {
 		//	MultiWiiProtocolCommand.WP,
 			MultiWiiProtocolCommand.BOXIDS,
 			MultiWiiProtocolCommand.SERVO_CONF
-			
-			//MultiWiiProtocolCommand.MSP_UUU
-
 		];
 
 		for( cmd in commands ) {
-			println( sendRecvPacket( cmd ) );
-			Sys.sleep(0.3);
+			cnx.send( cmd );
+			var packet = cnx.recv();
+			var data = MultiWiiProtocol.read( packet.code, packet.data );
+			println(data);
+			Sys.sleep(0.2);
 		}
+
+		cnx.disconnect();
 	}
 
 }

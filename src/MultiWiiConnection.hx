@@ -55,9 +55,7 @@ class MultiWiiConnection {
 			var available = serial.available();
 			if( available > 0 ) {
 				var pos = 0;
-				//trace( 'available:$available' );
 				while( pos < available ) {
-					//trace("state:"+state+'( pos:$pos, available:$available )' );
 					switch state {
 					case header(i):
 						var c = serial.readByte();
@@ -65,6 +63,7 @@ class MultiWiiConnection {
 							if( i == 2 && String.fromCharCode(c) == "!" ) {
 								//TODO protocol error
 								trace("TODO protocol error");
+								//state = error(0);
 							}
 							throw 'invalid msp header ($i)';
 						}
@@ -94,7 +93,7 @@ class MultiWiiConnection {
 						//trace( "checksum: "+sum+":"+p.checksum );
 						if( sum != p.checksum ) {
 							//TODO
-							trace("\tWARNING! INVALID CHECKSUM" );
+							trace("WARNING! INVALID CHECKSUM" );
 						}
 						return p;
 					}

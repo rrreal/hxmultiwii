@@ -50,8 +50,6 @@ import haxe.io.BytesInput;
 
 	var DEBUGMSG = 253;
 	var DEBUG = 254;
-
-	var UUU = 178;
 }
 
 /*
@@ -86,6 +84,9 @@ typedef MultiWiiProtocolPacket = {
 	var checksum : Int;
 }
 
+/**
+	http://www.multiwii.com/wiki/index.php?title=Multiwii_Serial_Protocol
+*/
 class MultiWiiProtocol {
 
 	public static inline var HEADER_A = "$M<"; // FC->PC
@@ -116,10 +117,12 @@ class MultiWiiProtocol {
 		return buf.getBytes();
 	}
 
+	//public static function read_ident( data : Bytes ) : Array<Int> {
+	
 	/**
 		Read MSP command data
 	*/
-	public static function read( msp : MultiWiiProtocolCommand, data : Bytes ) : Dynamic {
+	public static function read( msp : MultiWiiProtocolCommand, data : Bytes ) : Array<Int> {
 		var r = new Array<Int>();
 		var i = new BytesInput( data );
 		switch msp {
@@ -169,27 +172,25 @@ class MultiWiiProtocol {
 			r.push( i.readUInt16() );
 			for( j in 0...4 ) r.push( i.readByte() );
 		case MOTOR_PINS:
+			//trace("MOTOR_PINS");
 			for( j in 0...8 ) r.push( i.readByte() );
 		case BOXNAMES:
 			//TODO
-			return data.toString();
-			//var s = data.toString();
-			//for( j in 0...s.length ) r.push( s.charCodeAt(j) );
-
-		case PIDNAMES:
-			//TODO
-	//		trace("PIDNAMES");
-			//trace(data);
+			//return data.toString();
 			var s = data.toString();
 			for( j in 0...s.length ) r.push( s.charCodeAt(j) );
-
-
+		case PIDNAMES:
+			//TODO
+			//return data.toString();
+			var s = data.toString();
+			for( j in 0...s.length ) r.push( s.charCodeAt(j) );
 		case SERVO_CONF:
-	//		trace("SERVO_CONF");
 			for( j in 0...8 ) {
 				for( k in 0...3 ) r.push( i.readUInt16() );
 				r.push( i.readByte() );
 			}
+		case SET_RAW_RC:
+			
 		/*
 		case WP:
 			trace("WP");
@@ -205,6 +206,10 @@ class MultiWiiProtocol {
 			return null;
 		}
 		return r;
+	}
+
+	public static inline function readPacket( packet : MultiWiiProtocolPacket ) : Dynamic {
+		return read( packet.code, packet.data );
 	}
 	
 	/*
