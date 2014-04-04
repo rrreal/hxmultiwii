@@ -49,7 +49,7 @@ class MultiWiiConnection {
 	*/
 	public function recv() : MultiWiiProtocolPacket {
 		var state = header(0);
-		var p : MultiWiiProtocolPacket = { size : null, code : null, data : null, checksum : 0 }; 
+		var p : MultiWiiProtocolPacket = { size : cast null, code : cast null, data : null, checksum : 0 }; 
 		var packetPos = 0;
 		while( true ) {
 			var available = serial.available();
@@ -90,7 +90,7 @@ class MultiWiiConnection {
 						if( packetPos-4 == p.size ) state = checksum;
 					case checksum:
 						var sum = serial.readByte();
-						//trace( "checksum: "+sum+":"+p.checksum );
+						trace( "checksum: "+sum+":"+p.checksum );
 						if( sum != p.checksum ) {
 							//TODO
 							trace("WARNING! INVALID CHECKSUM" );
