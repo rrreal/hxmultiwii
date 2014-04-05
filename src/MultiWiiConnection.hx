@@ -70,12 +70,12 @@ class MultiWiiConnection {
 						state = (i < 2) ? header(i+1) : size;
 					case size:
 						p.size = serial.readByte();
+						p.checksum = p.size;
 						state = code;
-						p.checksum ^= (p.size & 0xff);
 					case code:
 						var msp = serial.readByte();
 						p.code = cast msp;
-						p.checksum ^= (msp & 0xff);
+						p.checksum ^= msp;
 						state = (p.size == 0) ? checksum : data;
 						if( p.size == 0 )
 							state = checksum;
@@ -86,14 +86,14 @@ class MultiWiiConnection {
 					case data:
 						var c = serial.readByte();
 						p.data.set( packetPos-5, c );
-						p.checksum ^= (c & 0xff);
+						p.checksum ^= c;
 						if( packetPos-4 == p.size ) state = checksum;
 					case checksum:
 						var sum = serial.readByte();
-						trace( "checksum: "+sum+":"+p.checksum );
+						//trace( "checksum: "+sum+":"+p.checksum );
 						if( sum != p.checksum ) {
 							//TODO
-							trace("WARNING! INVALID CHECKSUM" );
+							trace("WARNING! INVALID CHECKSUM ("+sum+":"+p.checksum+")" );
 						}
 						return p;
 					}
