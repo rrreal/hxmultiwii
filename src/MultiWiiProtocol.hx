@@ -50,6 +50,13 @@ import haxe.io.BytesInput;
 
 	var DEBUGMSG = 253;
 	var DEBUG = 254;
+
+	#if baseflight // Additional baseflight commands that are not compatible with MultiWii
+	var UID = 160, // Unique device ID
+	var ACC_TRIM = 240, // get acc angle trim values
+	var SET_ACC_TRIM = 239, // set acc angle trim values
+	var GPSSVINFO = 164  // get Signal Strength (only U-Blox)
+	#end
 }
 
 /*
@@ -234,5 +241,12 @@ class MultiWiiProtocol {
 		};
 	}
 	*/
+
+	public static function read_motor_pins( data : Bytes ) : Array<Int> {
+		var i = new BytesInput( data );
+		var pins = new Array<Int>();
+		for( _ in 0...8 ) pins.push( i.readByte() );
+		return pins;
+	}
 
 }
